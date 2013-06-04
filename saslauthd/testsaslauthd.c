@@ -96,7 +96,8 @@ static int saslauthd_verify_password(const char *saslauthd_path,
 				   const char *userid, 
 				   const char *passwd,
 				   const char *service,
-				   const char *user_realm)
+				   const char *user_realm,
+				   const char *client_addr)
 {
     char response[1024];
     char query[8192];
@@ -114,6 +115,7 @@ static int saslauthd_verify_password(const char *saslauthd_path,
 
     if(!service) service = "imap";
     if(!user_realm) user_realm = "";
+    if(!client_addr) client_addr = "";
     if(!userid || !passwd) return -1;
     
     if (saslauthd_path) {
@@ -129,16 +131,17 @@ static int saslauthd_verify_password(const char *saslauthd_path,
     /*
      * build request of the form:
      *
-     * count authid count password count service count realm
+     * count authid count password count service count realm count client
      */
     {
- 	unsigned short u_len, p_len, s_len, r_len;
+	unsigned short u_len, p_len, s_len, r_len, c_len;
  	struct iovec iov[8];
  
  	u_len = htons(strlen(userid));
  	p_len = htons(strlen(passwd));
 	s_len = htons(strlen(service));
 	r_len = htons((user_realm ? strlen(user_realm) : 0));
+	c_len = htons((client_addr ? strlen(client_addr): 0));
 
 	memcpy(query_end, &u_len, sizeof(unsigned short));
 	query_end += sizeof(unsigned short);
@@ -155,6 +158,10 @@ static int saslauthd_verify_password(const char *saslauthd_path,
 	memcpy(query_end, &r_len, sizeof(unsigned short));
 	query_end += sizeof(unsigned short);
 	if (user_realm) while (*user_realm) *query_end++ = *user_realm++;
+
+	memcpy(query_end, &c_len, sizeof(unsigned short));
+	query_end += sizeof(unsigned short);
+	if (client_addr) while (*client_addr) *query_end++ = *client_addr++;
     }
 
 #ifdef USE_DOORS
@@ -250,7 +257,8 @@ int
 main(int argc, char *argv[])
 {
   const char *user = NULL, *password = NULL;
-  const char *realm = NULL, *service = NULL, *path = NULL;
+  const char *realm = NULL, *service = NULL, *client = NULL;
+  const char *path = NULL;
   int c;
   int flag_error = 0;
   unsigned passlen, verifylen;
@@ -259,7 +267,7 @@ main(int argc, char *argv[])
   char *user_domain = NULL;
   int repeat = 0;
 
-  while ((c = getopt(argc, argv, "p:u:r:s:f:R:")) != EOF)
+  while ((c = getopt(argc, argv, "p:u:r:c:s:f:R:")) != EOF)
       switch (c) {
       case 'R':
 	  repeat = atoi(optarg);
@@ -272,6 +280,9 @@ main(int argc, char *argv[])
 	  break;
       case 'r':
 	  realm = optarg;
+	  break;
+      case 'c':
+	  client = optarg;
 	  break;
       case 'u':
 	  user = optarg;
@@ -290,7 +301,7 @@ main(int argc, char *argv[])
   if (flag_error) {
     (void)fprintf(stderr,
 		  "%s: usage: %s -u username -p password\n"
-		  "              [-r realm] [-s servicename]\n"
+		  "              [-r realm] [-c client_addr] [-s servicename]\n"
 		  "              [-f socket path] [-R repeatnum]\n",
 		  argv[0], argv[0]);
     exit(1);
@@ -300,7 +311,7 @@ main(int argc, char *argv[])
   for (c = 0; c < repeat; c++) {
       /* saslauthd-authenticated login */
       printf("%d: ", c);
-      result = saslauthd_verify_password(path, user, password, service, realm);
+      result = saslauthd_verify_password(path, user, password, service, realm, client);
   }
   return result;
 }
