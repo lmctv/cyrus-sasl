@@ -298,7 +298,8 @@ auth_rimap (
   const char *login,			/* I: plaintext authenticator */
   const char *password,			/* I: plaintext password */
   const char *service __attribute__((unused)),
-  const char *realm __attribute__((unused))
+  const char *realm __attribute__((unused)),
+  const char *remote                    /* I: remote host address */
   /* END PARAMETERS */
   )
 {
