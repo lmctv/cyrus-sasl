@@ -88,7 +88,8 @@ auth_shadow (
   const char *login,			/* I: plaintext authenticator */
   const char *password,			/* I: plaintext password */
   const char *service __attribute__((unused)),
-  const char *realm __attribute__((unused))
+  const char *realm __attribute__((unused)),
+  const char *remote                    /* I: remote host address */
   /* END PARAMETERS */
   )
 {
@@ -310,7 +311,8 @@ auth_shadow (
   const char *login __attribute__((unused)),
   const char *passwd __attribute__((unused)),
   const char *service __attribute__((unused)),
-  const char *realm __attribute__((unused))
+  const char *realm __attribute__((unused)),
+  const char *remote __attribute__((unused))
   )
 {
     return NULL;

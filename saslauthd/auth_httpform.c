@@ -494,7 +494,8 @@ auth_httpform (
   const char *user,			/* I: plaintext authenticator */
   const char *password,			/* I: plaintext password */
   const char *service,
-  const char *realm
+  const char *realm,
+  const char *remote                    /* I: remote host address */
   /* END PARAMETERS */
   )
 {
